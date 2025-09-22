@@ -1,0 +1,9 @@
+[
+  {"name":"JavaScript","type":"프로그래밍","level":9,"description":"프론트엔드 개발"},
+  {"name":"Python","type":"프로그래밍","level":8,"description":"데이터 처리 및 자동화"},
+  {"name":"AWS","type":"인프라","level":7,"description":"클라우드 인프라 운영"},
+  {"name":"Docker","type":"인프라","level":8,"description":"컨테이너화 및 배포"},
+  {"name":"SQL","type":"데이터","level":8,"description":"데이터 질의 및 모델링"},
+  {"name":"영어","type":"언어","level":9,"description":"영어실력"},
+  {"name":"자바","type":"프로그래밍","level":8,"description":"자바프로그래밍"}
+]

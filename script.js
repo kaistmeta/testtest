@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const navMenu = document.querySelector('.nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
     
-    // 스킬 바 요소들
-    const skillBars = document.querySelectorAll('.skill-progress');
+    // 스킬 바 요소들 (동적 렌더링 이후에 다시 조회됨)
+    let skillBars = document.querySelectorAll('.skill-progress');
     
     // 헤더 요소
     const header = document.querySelector('.header');
@@ -75,10 +75,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, observerOptions);
     
-    // 스킬 바들 관찰 시작
-    skillBars.forEach(bar => {
-        skillObserver.observe(bar);
-    });
+    function observeSkillBars() {
+        skillBars.forEach(bar => {
+            skillObserver.observe(bar);
+        });
+    }
     
     // 현재 섹션에 따른 네비게이션 활성화
     const sections = document.querySelectorAll('section[id]');
@@ -229,6 +230,83 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 페이지 로드 시 즉시 실행
     animateOnScroll();
+
+    // Notion Skills → skills.json을 불러와 동적으로 렌더링
+    async function loadAndRenderSkills() {
+        try {
+            const response = await fetch('skills.json', { cache: 'no-cache' });
+            if (!response.ok) throw new Error('Failed to load skills.json');
+            const skills = await response.json();
+
+            // 타입별 그룹핑 유지: 프로그래밍/인프라/데이터/언어 등
+            const groups = {};
+            for (const item of skills) {
+                const groupName = item.type || '기타';
+                if (!groups[groupName]) groups[groupName] = [];
+                groups[groupName].push(item);
+            }
+
+            const skillsGrid = document.getElementById('skills-grid');
+            if (!skillsGrid) return;
+            skillsGrid.innerHTML = '';
+
+            Object.keys(groups).forEach(groupName => {
+                const category = document.createElement('div');
+                category.className = 'skill-category';
+
+                const title = document.createElement('h3');
+                title.textContent = groupName;
+                category.appendChild(title);
+
+                const items = document.createElement('div');
+                items.className = 'skill-items';
+
+                groups[groupName].forEach(skill => {
+                    const levelPercent = Math.max(0, Math.min(100, Math.round((skill.level || 0) * 10)));
+
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'skill-item';
+
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'skill-name';
+                    nameEl.textContent = skill.name;
+
+                    const bar = document.createElement('div');
+                    bar.className = 'skill-bar';
+
+                    const progress = document.createElement('div');
+                    progress.className = 'skill-progress';
+                    progress.setAttribute('data-width', levelPercent + '%');
+                    progress.title = skill.description || '';
+
+                    bar.appendChild(progress);
+                    itemEl.appendChild(nameEl);
+                    itemEl.appendChild(bar);
+                    items.appendChild(itemEl);
+                });
+
+                category.appendChild(items);
+                skillsGrid.appendChild(category);
+            });
+
+            // 새로 생성된 스킬바 대상으로 옵저버 재설정
+            skillBars = document.querySelectorAll('.skill-progress');
+            observeSkillBars();
+
+            // 스크롤 애니메이션 대상에도 포함되도록 재초기화
+            const elementsToAnimateDynamic = document.querySelectorAll('.timeline-item, .project-card, .skill-category');
+            elementsToAnimateDynamic.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(30px)';
+                element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            });
+            animateOnScroll();
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    loadAndRenderSkills();
     
     // 부드러운 스크롤을 위한 추가 설정
     document.documentElement.style.scrollBehavior = 'smooth';
